@@ -1,8 +1,8 @@
 # Robust Django Service Layer
 
-This project demonstrates the limits of model signals and the explicit service-layer approach for order statistics.
+This project demonstrates the limitations of **Django model signals** and the use of an explicit **service layer** for reliable order statistics.
 
-## Local setup
+## Local Setup
 
 ```bash
 python -m venv .venv
@@ -13,26 +13,42 @@ python manage.py check
 python manage.py test
 ```
 
-The default local configuration uses SQLite. Copy `.env.example` to `.env` and provide PostgreSQL values when needed.
+The project uses **SQLite by default**. To use PostgreSQL, copy `.env.example` to `.env` and configure the database values.
 
 ## Docker
-
-Copy `.env.example` to `.env`, replace its placeholders, then run:
 
 ```bash
 docker compose up --build
 ```
 
-PostgreSQL becomes healthy before the application starts. The application entrypoint applies migrations automatically, and the app healthcheck runs `manage.py check`.
+Docker starts PostgreSQL, waits for it to become healthy, and automatically applies database migrations. The application healthcheck uses `manage.py check`.
 
-## Order creation
+## Order Creation
 
-Use `orders.services.create_order(user, total)` for production order creation. It atomically creates the order, creates missing `UserStats`, and updates totals with database-side `F()` expressions. `orders.signals` remains as an isolated legacy example for tests, but it is not registered by `OrdersConfig`.
+For production order creation, use:
+
+```python
+orders.services.create_order(user, total)
+```
+
+The service layer:
+
+* Creates orders atomically.
+* Creates `UserStats` when needed.
+* Updates order totals using database-side `F()` expressions.
+
+The signal implementation is kept as a **legacy example for testing** and is not registered through `OrdersConfig`.
 
 ## Benchmark
+
+Run the benchmark with:
 
 ```bash
 python manage.py benchmark_updates
 ```
 
-The command compares 1,000 individual order/stat updates with a bulk-create plus one aggregate stat update and prints parseable timing lines.
+It compares **1,000 individual updates** with **bulk order creation and a single aggregate statistics update**, and reports the execution times.
+
+## Conclusion
+
+The project shows that a **service-layer approach** provides clearer control over order processing, safer database updates, and better maintainability than relying on model signals.
